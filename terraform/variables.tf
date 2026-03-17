@@ -50,7 +50,17 @@ variable "n8n_encryption_key" {
   sensitive = true # Redacted from all Terraform output and logs
   # Set via GitHub Secret N8N_ENCRYPTION_KEY → TF_VAR_n8n_encryption_key in CI
 }
+variable "home_ip" {
+  description = "Home public IP address for App Service IP restriction"
+  type        = string
+  sensitive   = true
+}
 
+variable "budget_alert_email" {
+  description = "Email address to receive budget alert notifications"
+  type        = string
+  sensitive   = true
+}
 variable "tags" {
   description = "Tags applied to all resources — useful for cost tracking and filtering in the portal"
   type        = map(string)

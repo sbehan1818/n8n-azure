@@ -79,7 +79,7 @@ resource "azurerm_storage_account" "n8n" {
 # quota = maximum size in GB. 10GB is plenty for personal use.
 resource "azurerm_storage_share" "n8n_data" {
   name                 = "n8n-data"
-  storage_account_id = azurerm_storage_account.n8n.name
+  storage_account_name = azurerm_storage_account.n8n.name
   quota                = 10 # GB
 }
 
@@ -125,6 +125,24 @@ resource "azurerm_linux_web_app" "n8n" {
     # healthy. If /healthz stops responding, App Service will
     # restart the container automatically.
     health_check_path = "/healthz"
+
+    ip_restriction_default_action = "Deny"
+
+    ip_restriction {
+      name        = "home"
+      ip_address  = "${var.home_ip}/32"
+      action      = "Allow"
+      priority    = 100
+      description = "Scott home IP"
+    }
+
+    ip_restriction {
+      name        = "azure-health-check"
+      service_tag = "AzureCloud"
+      action      = "Allow"
+      priority    = 200
+      description = "Azure internal health check"
+    }
   }
 
   # --- Application settings (environment variables) ----------
@@ -149,7 +167,7 @@ resource "azurerm_linux_web_app" "n8n" {
 
     # Where n8n stores its data inside the container.
     # This path is where the Azure Files share is mounted below.
-    N8N_USER_FOLDER = "/home/node/.n8n"
+    N8N_USER_FOLDER = "/home/node/n8n-data"
 
     # Disable telemetry and update notifications for personal use
     N8N_DIAGNOSTICS_ENABLED           = "false"
@@ -178,7 +196,7 @@ resource "azurerm_linux_web_app" "n8n" {
     account_name = azurerm_storage_account.n8n.name              # Which storage account
     share_name   = azurerm_storage_share.n8n_data.name           # Which file share
     access_key   = azurerm_storage_account.n8n.primary_access_key # Auth key
-    mount_path   = "/home/node/.n8n"                              # Where to mount inside container
+    mount_path   = "/home/node/n8n-data"                              # Where to mount inside container
   }
 
   # --- Logging -----------------------------------------------
@@ -223,4 +241,33 @@ resource "azurerm_app_service_certificate_binding" "n8n" {
   hostname_binding_id = azurerm_app_service_custom_hostname_binding.n8n.id
   certificate_id      = azurerm_app_service_managed_certificate.n8n.id
   ssl_state           = "SniEnabled"
+}
+#--9. Resource Alert -------------------------------------------
+#sets the alert for resource consumption
+resource "azurerm_consumption_budget_resource_group" "n8n" {
+  name              = "budget-n8n-prod-eun"
+  resource_group_id = azurerm_resource_group.n8n.id
+
+  amount     = 20
+  time_grain = "Monthly"
+
+  time_period {
+    start_date = "2026-03-01T00:00:00Z"
+  }
+
+  notification {
+    enabled        = true
+    threshold      = 100
+    operator       = "GreaterThan"
+    threshold_type = "Actual"
+    contact_emails = [var.budget_alert_email]
+  }
+
+  notification {
+    enabled        = true
+    threshold      = 80
+    operator       = "GreaterThan"
+    threshold_type = "Actual"
+    contact_emails = [var.budget_alert_email]
+  }
 }
