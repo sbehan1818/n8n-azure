@@ -79,7 +79,7 @@ resource "azurerm_storage_account" "n8n" {
 # quota = maximum size in GB. 10GB is plenty for personal use.
 resource "azurerm_storage_share" "n8n_data" {
   name                 = "n8n-data"
-  storage_account_id = azurerm_storage_account.n8n.id
+  storage_account_id = azurerm_storage_account.n8n.name
   quota                = 10 # GB
 }
 

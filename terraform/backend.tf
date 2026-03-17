@@ -25,11 +25,11 @@ terraform {
     # Resource group that contains the state storage account.
     # Deliberately separate from the n8n project RG so it
     # survives if you ever destroy the n8n infrastructure.
-    resource_group_name = "rg-tfstate-shared-eun"
+    resource_group_name = "rg-tfstate-shared-uks"
 
     # The storage account created by bootstrap-state.sh.
     # Name must be globally unique across all of Azure.
-    storage_account_name = "stscotttfstateeun"
+    storage_account_name = "stscotttfstateuks"
 
     # The blob container inside the storage account.
     # One container can hold state files for multiple projects
