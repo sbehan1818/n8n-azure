@@ -44,13 +44,38 @@ set -euo pipefail
 
 # --- Config (edit these if reusing for another project) ------
 LOCATION="uksouth"                  # Azure region — UK South
+SUBSCRIPTION_ID="638dbffa-365e-4c7d-9e37-b93810639114"  # Personal PAYG subscription
 RG_STATE="rg-tfstate-shared-uks"   # Resource group for ALL Terraform state (shared across projects)
 SA_NAME="stscotttfstateuks"        # Storage account name — must be globally unique across ALL of Azure,
                                     # 3-24 chars, lowercase alphanumeric only, no hyphens
 CONTAINER_NAME="tfstate"           # Blob container inside the storage account
 # -------------------------------------------------------------
 
-# --- Step 1: Create the resource group -----------------------
+# --- Step 0: Set subscription context ------------------------
+# Explicitly set the subscription on every run so the CLI
+# never silently falls back to the wrong account.
+echo "==> Setting subscription context: $SUBSCRIPTION_ID"
+az account set --subscription "$SUBSCRIPTION_ID"
+az account show --output table
+
+# --- Step 1: Register required resource providers ------------
+# New Azure subscriptions don't have all resource providers
+# enabled by default. These are the namespaces Terraform needs
+# to create storage accounts, app services, and networking.
+# Registration is idempotent — safe to run even if already registered.
+echo "==> Registering required Azure resource providers..."
+az provider register --namespace Microsoft.Storage   --subscription "$SUBSCRIPTION_ID"
+az provider register --namespace Microsoft.Web       --subscription "$SUBSCRIPTION_ID"
+az provider register --namespace Microsoft.Network   --subscription "$SUBSCRIPTION_ID"
+
+echo "==> Waiting for Microsoft.Storage to finish registering..."
+while [ "$(az provider show --namespace Microsoft.Storage --query registrationState -o tsv)" != "Registered" ]; do
+  echo "    Still registering — waiting 10s..."
+  sleep 10
+done
+echo "    Microsoft.Storage: Registered"
+
+# --- Step 2: Create the resource group -----------------------
 # A resource group is a logical container for Azure resources.
 # We use a dedicated RG for state so it is never accidentally
 # deleted when tearing down a project's own resource group.
@@ -58,9 +83,10 @@ echo "==> Creating resource group: $RG_STATE (CAF: rg-<workload>-<env>-<region>)
 az group create \
   --name "$RG_STATE" \
   --location "$LOCATION" \
+  --subscription "$SUBSCRIPTION_ID" \
   --output table
 
-# --- Step 2: Create the storage account ----------------------
+# --- Step 3: Create the storage account ----------------------
 # Standard_LRS = Locally Redundant Storage — 3 copies within
 # one datacenter. Sufficient and cheapest option for state files.
 # StorageV2 = current generation, supports all features.
@@ -71,13 +97,14 @@ az storage account create \
   --name "$SA_NAME" \
   --resource-group "$RG_STATE" \
   --location "$LOCATION" \
+  --subscription "$SUBSCRIPTION_ID" \
   --sku Standard_LRS \
   --kind StorageV2 \
   --min-tls-version TLS1_2 \
   --allow-blob-public-access false \
   --output table
 
-# --- Step 3: Create the blob container -----------------------
+# --- Step 4: Create the blob container -----------------------
 # A container is like a folder inside the storage account.
 # Terraform will write one state file per project into here,
 # identified by a unique key (e.g. n8n/terraform.tfstate).
@@ -87,10 +114,11 @@ echo "==> Creating blob container: $CONTAINER_NAME"
 az storage container create \
   --name "$CONTAINER_NAME" \
   --account-name "$SA_NAME" \
+  --subscription "$SUBSCRIPTION_ID" \
   --auth-mode login \
   --output table
 
-# --- Step 4: Print outputs -----------------------------------
+# --- Step 5: Print outputs -----------------------------------
 # Remind the user what values to put in backend.tf and which
 # secret to add to GitHub Actions.
 echo ""
@@ -108,6 +136,7 @@ echo "==> Add this as a GitHub Actions secret named ARM_ACCESS_KEY:"
 SA_KEY=$(az storage account keys list \
   --account-name "$SA_NAME" \
   --resource-group "$RG_STATE" \
+  --subscription "$SUBSCRIPTION_ID" \
   --query "[0].value" -o tsv)
 echo "    ARM_ACCESS_KEY = $SA_KEY"
 echo ""
