@@ -117,7 +117,7 @@ resource "azurerm_linux_web_app" "n8n" {
     always_on = false
 
     application_stack {
-      docker_image_name   = "n8nio/n8n:latest" # Official n8n Docker image
+      docker_image_name   = "n8nio/n8n:latest"  # Official n8n Docker image
       docker_registry_url = "https://docker.io" # Docker Hub
     }
 
@@ -152,7 +152,7 @@ resource "azurerm_linux_web_app" "n8n" {
   app_settings = {
     # Tell n8n what hostname it's running on so it generates
     # correct URLs for webhooks and the UI
-    N8N_HOST     = var.custom_hostname   # n8n.scottbehan.dev
+    N8N_HOST     = var.custom_hostname # n8n.scottbehan.dev
     N8N_PROTOCOL = "https"
     N8N_PORT     = "5678" # n8n's default internal port
 
@@ -191,12 +191,12 @@ resource "azurerm_linux_web_app" "n8n" {
   # data directory is backed by persistent cloud storage.
   # If the container restarts or is redeployed, all data persists.
   storage_account {
-    name         = "n8n-data"                                    # Internal reference name
+    name         = "n8n-data"                                     # Internal reference name
     type         = "AzureFiles"                                   # Mount type
-    account_name = azurerm_storage_account.n8n.name              # Which storage account
-    share_name   = azurerm_storage_share.n8n_data.name           # Which file share
+    account_name = azurerm_storage_account.n8n.name               # Which storage account
+    share_name   = azurerm_storage_share.n8n_data.name            # Which file share
     access_key   = azurerm_storage_account.n8n.primary_access_key # Auth key
-    mount_path   = "/home/node/n8n-data"                              # Where to mount inside container
+    mount_path   = "/home/node/n8n-data"                          # Where to mount inside container
   }
 
   # --- Logging -----------------------------------------------

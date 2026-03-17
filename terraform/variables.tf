@@ -46,8 +46,8 @@ variable "n8n_encryption_key" {
     WARNING: If you lose this key, all saved credentials in n8n are unrecoverable.
     Store it safely in GitHub Secrets and never commit it to the repo.
   EOT
-  type      = string
-  sensitive = true # Redacted from all Terraform output and logs
+  type        = string
+  sensitive   = true # Redacted from all Terraform output and logs
   # Set via GitHub Secret N8N_ENCRYPTION_KEY → TF_VAR_n8n_encryption_key in CI
 }
 variable "home_ip" {

@@ -22,7 +22,7 @@ output "app_service_default_hostname" {
     Format: app-n8n-prod-eun.azurewebsites.net
     Use this as the CNAME target in Cloudflare (DNS only, not proxied).
   EOT
-  value = azurerm_linux_web_app.n8n.default_hostname
+  value       = azurerm_linux_web_app.n8n.default_hostname
 }
 
 output "app_service_name" {
