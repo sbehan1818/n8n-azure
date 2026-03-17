@@ -60,8 +60,7 @@ jobs:
           TF_VAR_home_ip:               ${{ secrets.HOME_IP }}
           TF_VAR_budget_alert_email:    ${{ secrets.BUDGET_ALERT_EMAIL }}
         run: |
-          terraform plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
-          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+          terraform plan -no-color 2>&1 | tee plan_output.txt
 
       - name: Comment Plan on PR
         if: github.event_name == 'pull_request'
@@ -88,4 +87,4 @@ jobs:
           TF_VAR_custom_hostname:       ${{ secrets.N8N_HOSTNAME }}
           TF_VAR_home_ip:               ${{ secrets.HOME_IP }}
           TF_VAR_budget_alert_email:    ${{ secrets.BUDGET_ALERT_EMAIL }}
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve
