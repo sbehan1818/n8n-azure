@@ -19,7 +19,7 @@ output "app_service_default_hostname" {
     The default Azure hostname for the App Service.
     You need this to create the Cloudflare CNAME record BEFORE
     the custom domain binding can be applied.
-    Format: app-n8n-prod-uks.azurewebsites.net
+    Format: app-n8n-prod-eun.azurewebsites.net
     Use this as the CNAME target in Cloudflare (DNS only, not proxied).
   EOT
   value = azurerm_linux_web_app.n8n.default_hostname

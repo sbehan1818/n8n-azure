@@ -49,8 +49,8 @@ provider "azurerm" {
 # and deleted together. Separate from the tfstate RG so you can
 # tear down n8n without affecting Terraform state storage.
 resource "azurerm_resource_group" "n8n" {
-  name     = var.resource_group_name # rg-n8n-prod-uks
-  location = var.location            # uksouth
+  name     = var.resource_group_name # rg-n8n-prod-eun
+  location = var.location            # northeurope
   tags     = var.tags
 }
 
@@ -63,7 +63,7 @@ resource "azurerm_resource_group" "n8n" {
 # Standard_LRS = Locally Redundant Storage (3 copies in one DC)
 # Sufficient for personal use — upgrade to ZRS/GRS for prod.
 resource "azurerm_storage_account" "n8n" {
-  name                     = "stn8nprod" # CAF: st<workload><env> — no hyphens allowed
+  name                     = "stn8nsbprod" # CAF: st<workload><env> — no hyphens allowed
   resource_group_name      = azurerm_resource_group.n8n.name
   location                 = azurerm_resource_group.n8n.location
   account_tier             = "Standard"
@@ -79,7 +79,7 @@ resource "azurerm_storage_account" "n8n" {
 # quota = maximum size in GB. 10GB is plenty for personal use.
 resource "azurerm_storage_share" "n8n_data" {
   name                 = "n8n-data"
-  storage_account_name = azurerm_storage_account.n8n.name
+  storage_account_id = azurerm_storage_account.n8n.id
   quota                = 10 # GB
 }
 
@@ -90,7 +90,7 @@ resource "azurerm_storage_share" "n8n_data" {
 # B1 = Basic tier, 1 vCore, 1.75GB RAM — enough for personal n8n.
 # os_type = Linux required for Docker container deployments.
 resource "azurerm_service_plan" "n8n" {
-  name                = "asp-n8n-prod-uks" # CAF: asp-<workload>-<env>-<region>
+  name                = "asp-n8n-prod-eun" # CAF: asp-<workload>-<env>-<region>
   resource_group_name = azurerm_resource_group.n8n.name
   location            = azurerm_resource_group.n8n.location
   os_type             = "Linux"
@@ -103,7 +103,7 @@ resource "azurerm_service_plan" "n8n" {
 # App Service pulls the image from Docker Hub on startup and
 # mounts the Azure Files share for persistent storage.
 resource "azurerm_linux_web_app" "n8n" {
-  name                = "app-n8n-prod-uks" # CAF: app-<workload>-<env>-<region>
+  name                = "app-n8n-prod-eun" # CAF: app-<workload>-<env>-<region>
   resource_group_name = azurerm_resource_group.n8n.name
   location            = azurerm_resource_group.n8n.location
   service_plan_id     = azurerm_service_plan.n8n.id
@@ -183,7 +183,7 @@ resource "azurerm_linux_web_app" "n8n" {
 
   # --- Logging -----------------------------------------------
   # Retains HTTP access logs for 7 days. View them with:
-  # az webapp log tail --name app-n8n-prod-uks --resource-group rg-n8n-prod-uks
+  # az webapp log tail --name app-n8n-prod-eun --resource-group rg-n8n-prod-eun
   logs {
     http_logs {
       file_system {

@@ -23,13 +23,13 @@
 variable "location" {
   description = "Azure region to deploy all resources into"
   type        = string
-  default     = "uksouth" # UK South — lowest latency from Northampton
+  default     = "northeurope" # North Europe — lowest latency from Northampton
 }
 
 variable "resource_group_name" {
   description = "Name of the resource group for all n8n resources"
   type        = string
-  default     = "rg-n8n-prod-uks" # CAF: rg-<workload>-<env>-<region>
+  default     = "rg-n8n-prod-eun" # CAF: rg-<workload>-<env>-<region>
 }
 
 variable "custom_hostname" {
